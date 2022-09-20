@@ -20,6 +20,50 @@ Pkg.instantiate()
 
 ## Problem 1.1
 
+```julia
+
+function CRUD_conc(x, U, Cs, Co, Bo, No, ka, kc, kn)
+  # U is the stream velocity, Cs is the saturated oxygen saturation, Co is the initial dissolved DO conc,
+  # Bo is the inital CBOD conc, No is the initial NBOD conc, ka is the reaeration rate, kc is the CBOD
+  # CBOD decay rate, kn is the NBOD decay rate
+
+  # terms that will end up in final equation
+  a1 = exp((-ka*x)/U)
+  a2 = (kc/(ka-kc))*(exp((-ka*x)/U)-exp((-kc*x/U)))
+  a3 = (kn/(ka-kn))*(exp((-kn*x)/U)-exp((-kc*x/U)))
+
+  # eq for concentration
+  conc = Cs*(1-a1)+Co*a1-Bo*a2-No*a3
+  return conc
+end
+
+# initialize for plotting
+c = zeros(51)
+
+# from x=0 to x=15
+init_DO = ((7.5*1000*100000)+(5*1000*10000))/(100000+10000)
+init_CBOD = ((5*1000*100000)+(50*1000*10000))/(100000+10000)
+init_NBOD = ((5*1000*100000)+(35*1000*10000))/(100000+10000)
+for i in 1:16
+  c[i] = CRUD_conc(i-1, 6, 10, init_DO, init_CBOD, init_NBOD, .55, .35, .25)
+end
+
+# from x=15 to x=50
+init_DO2 = c[16]
+b15 = init_CBOD*exp((-.35*15)/6)
+n15 = init_NBOD*exp((-.25*15)/6)
+init_CBOD2 = ((b15*110000)+(45*1000*15000))/(110000+15000)
+init_NBOD2 = ((n15*110000)+(35*1000*15000))/(110000+15000)
+for i in 16:50
+  c[i] = CRUD_conc(i-1, 6, 10, init_DO2, init_CBOD2, init_NBOD2, .55, .35, .25)
+end
+
+using Plots
+
+plot(c)
+
+```
+
 ## Problem 1.2
 
 ## Problem 1.3
