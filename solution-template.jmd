@@ -29,38 +29,50 @@ function CRUD_conc(x, U, Cs, Co, Bo, No, ka, kc, kn)
 
   # terms that will end up in final equation
   a1 = exp((-ka*x)/U)
-  a2 = (kc/(ka-kc))*(exp((-ka*x)/U)-exp((-kc*x/U)))
-  a3 = (kn/(ka-kn))*(exp((-kn*x)/U)-exp((-kc*x/U)))
+  a2 = (kc/(ka-kc))*(exp((-kc*x)/U)-exp((-ka*x/U)))
+  a3 = (kn/(ka-kn))*(exp((-kn*x)/U)-exp((-ka*x/U)))
 
   # eq for concentration
   conc = Cs*(1-a1)+Co*a1-Bo*a2-No*a3
-  return conc
+
+  # eq for CBOD
+  CBOD = Bo*exp((-kc*x)/U)
+
+  # eq for NBOD
+  NBOD = No*exp((-kn*x)/U)
+
+  return conc, CBOD, NBOD
 end
 
 # initialize for plotting
-c = zeros(51)
+C = zeros(51)
+B = zeros(51)
+N = zeros(51)
 
-# from x=0 to x=15
-init_DO = ((7.5*1000*100000)+(5*1000*10000))/(100000+10000)
-init_CBOD = ((5*1000*100000)+(50*1000*10000))/(100000+10000)
-init_NBOD = ((5*1000*100000)+(35*1000*10000))/(100000+10000)
-for i in 1:16
-  c[i] = CRUD_conc(i-1, 6, 10, init_DO, init_CBOD, init_NBOD, .55, .35, .25)
+# find vals at x=0
+init_DO = ((7.5*1000*100000)+(5*1000*10000))/(1000*100000+1000*10000)
+init_CBOD = ((5*1000*100000)+(50*1000*10000))/(1000*100000+1000*10000)
+init_NBOD = ((5*1000*100000)+(35*1000*10000))/(1000*100000+1000*10000)
+C[1] = init_DO
+B[1] = init_CBOD
+N[1] = init_NBOD
+
+# from x=1 to x=15
+for i in 2:16
+  C[i], B[i], N[i] = CRUD_conc(i, 6, 10, init_DO, init_CBOD, init_NBOD, .55, .35, .25)
 end
 
 # from x=15 to x=50
-init_DO2 = c[16]
-b15 = init_CBOD*exp((-.35*15)/6)
-n15 = init_NBOD*exp((-.25*15)/6)
-init_CBOD2 = ((b15*110000)+(45*1000*15000))/(110000+15000)
-init_NBOD2 = ((n15*110000)+(35*1000*15000))/(110000+15000)
-for i in 16:50
-  c[i] = CRUD_conc(i-1, 6, 10, init_DO2, init_CBOD2, init_NBOD2, .55, .35, .25)
+init_DO2 = ((C[16]*1000*110000)+(5*1000*15000))/(1000*110000+1000*15000)
+init_CBOD2 = ((B[16]*1000*110000)+(45*1000*15000))/(1000*110000+1000*15000)
+init_NBOD2 = ((N[16]*1000*110000)+(35*1000*15000))/(1000*110000+1000*15000)
+for i in 16:51
+  C[i], B[i], N[i] = CRUD_conc(i, 6, 10, init_DO2, init_CBOD2, init_NBOD2, .55, .35, .25)
 end
 
 using Plots
 
-plot(c)
+plot(C, title= "Dissolved Oxygen (DO) concentration", label= "DO concentration", xlabel="Distance (km)", ylabel= "DO (mg/L)")
 
 ```
 
