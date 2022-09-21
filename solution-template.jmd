@@ -59,7 +59,7 @@ N[1] = init_NBOD
 
 # from x=1 to x=15
 for i in 2:16
-  C[i], B[i], N[i] = CRUD_conc(i, 6, 10, init_DO, init_CBOD, init_NBOD, .55, .35, .25)
+  C[i], B[i], N[i] = CRUD_conc(i-1, 6, 10, init_DO, init_CBOD, init_NBOD, .55, .35, .25)
 end
 
 # from x=15 to x=50
@@ -67,7 +67,7 @@ init_DO2 = ((C[16]*1000*110000)+(5*1000*15000))/(1000*110000+1000*15000)
 init_CBOD2 = ((B[16]*1000*110000)+(45*1000*15000))/(1000*110000+1000*15000)
 init_NBOD2 = ((N[16]*1000*110000)+(35*1000*15000))/(1000*110000+1000*15000)
 for i in 16:51
-  C[i], B[i], N[i] = CRUD_conc(i, 6, 10, init_DO2, init_CBOD2, init_NBOD2, .55, .35, .25)
+  C[i], B[i], N[i] = CRUD_conc(i-16, 6, 10, init_DO2, init_CBOD2, init_NBOD2, .55, .35, .25)
 end
 
 using Plots
