@@ -1,6 +1,6 @@
 ---
 title: "BEE 4750/5750 Homework 2"
-author: "Your name here (your netID here)"
+author: "Sarah Mack (skm237)"
 date: `j import Dates; Dates.Date(Dates.now())`
 weave_options:
     term: true
@@ -45,17 +45,17 @@ function CRUD_conc(x, U, Cs, Co, Bo, No, ka, kc, kn)
 end
 
 # initialize for plotting
-C = zeros(51)
-B = zeros(51)
-N = zeros(51)
+C = zeros(51);
+B = zeros(51);
+N = zeros(51);
 
 # find vals at x=0
 init_DO = ((7.5*1000*100000)+(5*1000*10000))/(1000*100000+1000*10000)
 init_CBOD = ((5*1000*100000)+(50*1000*10000))/(1000*100000+1000*10000)
 init_NBOD = ((5*1000*100000)+(35*1000*10000))/(1000*100000+1000*10000)
-C[1] = init_DO
-B[1] = init_CBOD
-N[1] = init_NBOD
+C[1] = init_DO;
+B[1] = init_CBOD;
+N[1] = init_NBOD;
 
 # from x=1 to x=15
 for i in 2:16
@@ -70,21 +70,156 @@ for i in 16:51
   C[i], B[i], N[i] = CRUD_conc(i-16, 6, 10, init_DO2, init_CBOD2, init_NBOD2, .55, .35, .25)
 end
 
+# plot DO
 using Plots
-
 plot(C, title= "Dissolved Oxygen (DO) concentration", label= "DO concentration", xlabel="Distance (km)", ylabel= "DO (mg/L)")
 
 ```
 
+
+
 ## Problem 1.2
+
+```julia
+
+# initialize distance from waste stream 2
+distfrom1=16
+
+# find distance where DO recovers to 6 mg/L
+  while C[distfrom1] < 6
+    global distfrom1 += 1
+  end
+println(distfrom1)
+println(C[distfrom1])
+
+```
+
+The distance at which the stream recovers to a DO of 6 mg/L if both waste streams are untreated is around 43 m 
+after the first waste stream, or around 27 m after the second waste stream.
+
+
+
 
 ## Problem 1.3
 
+```julia
+
+function CRUD_conc_treat(Co, Bo, No, E)
+  # Co is the initial dissolved DO conc, Bo is the inital CBOD conc, No is the initial NBOD conc
+  # E is the treatment efficiency
+
+  conc_treat = (1-(E/100))*Co
+  CBOD_treat = (1-(E/100))*Bo
+  NBOD_treat = (1-(E/100))*No
+
+  return conc_treat, CBOD_treat, NBOD_treat
+end
+
+function find_treatment_min(U, Cs, C1, B1, N1, C2, B2, N2, ka, kc, kn, E1, E2)
+
+    # find new treated vals for waste stream 1
+    conc_treated1, CBOD_treated1, NBOD_treated1 = CRUD_conc_treat(C1, B1, N1, E1)
+
+    # find stream vals at x=0
+    initial_DO1 = ((7.5*1000*100000)+(conc_treated1*1000*10000))/(1000*100000+1000*10000)
+    initial_CBOD1 = ((5*1000*100000)+(CBOD_treated1*1000*10000))/(1000*100000+1000*10000)
+    initial_NBOD1 = ((5*1000*100000)+(NBOD_treated1*1000*10000))/(1000*100000+1000*10000)
+
+    # find stream vals at x = 15
+    DO_15, CBOD_15, NBOD_15 = CRUD_conc(15, U, Cs, initial_DO1, initial_CBOD1, initial_NBOD1, .55, .35, .25)
+
+    # find new treated vals for waste stream 2
+    conc_treated2, CBOD_treated2, NBOD_treated2 = CRUD_conc_treat(C2, B2, N2, E2)
+
+    # find stream vals after waste stream 2
+    initial_DO2 = ((DO_15*1000*110000)+(conc_treated2*1000*15000))/(1000*110000+1000*15000)
+    initial_CBOD2 = ((CBOD_15*1000*110000)+(CBOD_treated2*1000*15000))/(1000*110000+1000*15000)
+    initial_NBOD2 = ((NBOD_15*1000*110000)+(NBOD_treated2*1000*15000))/(1000*110000+1000*15000)
+
+    # find minimum for the treatment
+    Cmin = 1000
+    for i in 1:36
+      newC, newB, newN = CRUD_conc(i-1, U, Cs, initial_DO2, initial_CBOD2, initial_NBOD2, ka, kc, kn)
+      if newC < Cmin
+        Cmin = newC
+      end
+    end
+  return Cmin
+
+end
+
+# create vector of all possible treatments
+treatment_plans = collect(0:100)
+
+# initialize vector to store minimums
+mins = zeros(101);
+
+# iterate treatments
+for i in 1:101
+  mins[i] = find_treatment_min(6, 10, 5, 50, 35, 5, 45, 35, .55, .35, .25, 0, treatment_plans[i])
+end
+
+# minimum %removal that has DO always less that 4 mg/L
+tr = 1
+while mins[tr] < 4
+  global tr +=1
+end
+println(tr-1)
+println(mins[tr])
+
+```
+
+The minimum treatment plan that guarantees all DO values are above 4 mg/L is waste stream 2 having a 
+treatment of 14%.
+
+
+
+
 ## Problem 1.4
+
+```julia
+
+# create vector of all possible treatments
+treatment_plans = collect(0:100)
+
+# initialize vector to store minimums
+mins2 = zeros(101);
+
+# iterate treatments, each stream is treated equally
+for i in 1:101
+  mins2[i] = find_treatment_min(6, 10, 5, 50, 35, 5, 45, 35, .55, .35, .25, treatment_plans[i], treatment_plans[i])
+end
+
+# minimum %removal that has DO always less that 4 mg/L
+tr2 = 1
+while mins2[tr2] < 4
+  global tr2 +=1
+end
+println(tr2-1)
+println(mins2[tr2])
+
+```
+
+If the streams are treated equally, the treatment value that keeps the DO above 4 mg/L is 8% for each stream.
+
+
+
 
 ## Problem 1.5
 
+In order to make a decision about the two treatment plans above, cost should be considered, as well as 
+the plants' willingness to participate in a treatment plan. The first plan, only requiring waste stream 2 
+to be treated, is not fair to the second plant as the first plant does not need to treat their waste. 
+However, treating both waste streams would likely be more expensive,  or it would be tough getting both 
+plants to agree to the treatment plan. I would be more likely to ask both plants to treat their waste 
+at a rate of 8% as it is more fair, but there are other considerations to take into account in the real world.
+
+
+
+
 ## Problem 1.6
+
+
 
 ## Problem 1.7
 
@@ -111,3 +246,7 @@ end
 ```
 
 # References
+
+Julia: short syntax for creating (1,n) array. Stack Overflow. https://stackoverflow.com/questions/45512271/julia-short-syntax-for-creating-1-n-array 
+
+Repeated Evaluation: Loops. Control Flow. Julia Documentation. https://docs.julialang.org/en/v1/manual/control-flow/#man-loops 
