@@ -104,21 +104,12 @@ after the first waste stream, or around 27 m after the second waste stream.
 
 ```julia
 
-function CRUD_conc_treat(Co, Bo, No, E)
-  # Co is the initial dissolved DO conc, Bo is the inital CBOD conc, No is the initial NBOD conc
-  # E is the treatment efficiency
-
-  conc_treat = (1-(E/100))*Co
-  CBOD_treat = (1-(E/100))*Bo
-  NBOD_treat = (1-(E/100))*No
-
-  return conc_treat, CBOD_treat, NBOD_treat
-end
-
 function find_treatment_min(U, Cs, C1, B1, N1, C2, B2, N2, ka, kc, kn, E1, E2)
 
     # find new treated vals for waste stream 1
-    conc_treated1, CBOD_treated1, NBOD_treated1 = CRUD_conc_treat(C1, B1, N1, E1)
+    conc_treated1 = (1-(E1/100))*C1
+    CBOD_treated1 = (1-(E1/100))*B1
+    NBOD_treated1 = (1-(E1/100))*N1
 
     # find stream vals at x=0
     initial_DO1 = ((7.5*1000*100000)+(conc_treated1*1000*10000))/(1000*100000+1000*10000)
@@ -129,7 +120,9 @@ function find_treatment_min(U, Cs, C1, B1, N1, C2, B2, N2, ka, kc, kn, E1, E2)
     DO_15, CBOD_15, NBOD_15 = CRUD_conc(15, U, Cs, initial_DO1, initial_CBOD1, initial_NBOD1, .55, .35, .25)
 
     # find new treated vals for waste stream 2
-    conc_treated2, CBOD_treated2, NBOD_treated2 = CRUD_conc_treat(C2, B2, N2, E2)
+    conc_treated2 = (1-(E2/100))*C2
+    CBOD_treated2 = (1-(E2/100))*B2
+    NBOD_treated2 = (1-(E2/100))*N2
 
     # find stream vals after waste stream 2
     initial_DO2 = ((DO_15*1000*110000)+(conc_treated2*1000*15000))/(1000*110000+1000*15000)
