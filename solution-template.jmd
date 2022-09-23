@@ -104,7 +104,7 @@ after the first waste stream, or around 27 m after the second waste stream.
 
 ```julia
 
-function find_treatment_min(U, Cs, C1, B1, N1, C2, B2, N2, ka, kc, kn, E1, E2)
+function find_treatment_min(U, Cs, Co, Bo, No, C1, B1, N1, C2, B2, N2, ka, kc, kn, E1, E2)
 
     # find new treated vals for waste stream 1
     conc_treated1 = (1-(E1/100))*C1
@@ -112,9 +112,9 @@ function find_treatment_min(U, Cs, C1, B1, N1, C2, B2, N2, ka, kc, kn, E1, E2)
     NBOD_treated1 = (1-(E1/100))*N1
 
     # find stream vals at x=0
-    initial_DO1 = ((7.5*1000*100000)+(conc_treated1*1000*10000))/(1000*100000+1000*10000)
-    initial_CBOD1 = ((5*1000*100000)+(CBOD_treated1*1000*10000))/(1000*100000+1000*10000)
-    initial_NBOD1 = ((5*1000*100000)+(NBOD_treated1*1000*10000))/(1000*100000+1000*10000)
+    initial_DO1 = ((Co*1000*100000)+(conc_treated1*1000*10000))/(1000*100000+1000*10000)
+    initial_CBOD1 = ((Bo*1000*100000)+(CBOD_treated1*1000*10000))/(1000*100000+1000*10000)
+    initial_NBOD1 = ((No*1000*100000)+(NBOD_treated1*1000*10000))/(1000*100000+1000*10000)
 
     # find stream vals at x = 15
     DO_15, CBOD_15, NBOD_15 = CRUD_conc(15, U, Cs, initial_DO1, initial_CBOD1, initial_NBOD1, .55, .35, .25)
@@ -149,7 +149,7 @@ mins = zeros(101);
 
 # iterate treatments
 for i in 1:101
-  mins[i] = find_treatment_min(6, 10, 5, 50, 35, 5, 45, 35, .55, .35, .25, 0, treatment_plans[i])
+  mins[i] = find_treatment_min(6, 10, 7.5, 5, 5, 5, 50, 35, 5, 45, 35, .55, .35, .25, 0, treatment_plans[i])
 end
 
 # minimum %removal that has DO always less that 4 mg/L
@@ -212,6 +212,46 @@ at a rate of 8% as it is more fair, but there are other considerations to take i
 
 ## Problem 1.6
 
+```julia
+
+using Distributions
+
+probs = zeros(100);
+
+for j in 1:100
+
+  global mins3 = zeros(100);
+  global fails_regulation = zeros(0);
+  global CBODs = zeros(100);
+  global NBODs = zeros(100);
+
+  for i in 1:100
+    CBODs[i] = rand(Uniform(4, 7));
+    NBODs[i] = rand(Uniform(3, 8));
+  end
+
+  for i in 1:100
+    mins3[i] = find_treatment_min(6, 10, 7.5, CBODs[i], NBODs[i], 5, 50, 35, 5, 45, 35, .55, .35, .25, 8, 8);
+  end
+
+  for i in 1:100
+   if mins3[i] < 4
+     append!(fails_regulation, mins3[i]);
+   end
+  end
+
+  probs[j] = (length(fails_regulation))/(length(mins3))
+
+end
+
+avg_prob = (sum(probs))/(length(probs))
+
+```
+
+The average probability that the treatment does not meet the requirement of DO above 4 mg/L is 
+around 69%.
+
+
 
 
 ## Problem 1.7
@@ -240,6 +280,10 @@ end
 
 # References
 
+Julia: append to an empty vector. Stack Overflow. https://stackoverflow.com/questions/28524105/julia-append-to-an-empty-vector 
+
 Julia: short syntax for creating (1,n) array. Stack Overflow. https://stackoverflow.com/questions/45512271/julia-short-syntax-for-creating-1-n-array 
 
 Repeated Evaluation: Loops. Control Flow. Julia Documentation. https://docs.julialang.org/en/v1/manual/control-flow/#man-loops 
+
+Univariate Distributions. Distributions.jl. Julia Documentation. https://docs.juliahub.com/Distributions/xILW0/0.25.10/univariate/ 
