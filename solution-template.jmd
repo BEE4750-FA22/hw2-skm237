@@ -107,12 +107,11 @@ after the first waste stream, or around 27 m after the second waste stream.
 function find_treatment_min(U, Cs, Co, Bo, No, C1, B1, N1, C2, B2, N2, ka, kc, kn, E1, E2)
 
     # find new treated vals for waste stream 1
-    conc_treated1 = (1-(E1/100))*C1
     CBOD_treated1 = (1-(E1/100))*B1
     NBOD_treated1 = (1-(E1/100))*N1
 
     # find stream vals at x=0
-    initial_DO1 = ((Co*1000*100000)+(conc_treated1*1000*10000))/(1000*100000+1000*10000)
+    initial_DO1 = ((Co*1000*100000)+(C1*1000*10000))/(1000*100000+1000*10000)
     initial_CBOD1 = ((Bo*1000*100000)+(CBOD_treated1*1000*10000))/(1000*100000+1000*10000)
     initial_NBOD1 = ((No*1000*100000)+(NBOD_treated1*1000*10000))/(1000*100000+1000*10000)
 
@@ -120,12 +119,11 @@ function find_treatment_min(U, Cs, Co, Bo, No, C1, B1, N1, C2, B2, N2, ka, kc, k
     DO_15, CBOD_15, NBOD_15 = CRUD_conc(15, U, Cs, initial_DO1, initial_CBOD1, initial_NBOD1, .55, .35, .25)
 
     # find new treated vals for waste stream 2
-    conc_treated2 = (1-(E2/100))*C2
     CBOD_treated2 = (1-(E2/100))*B2
     NBOD_treated2 = (1-(E2/100))*N2
 
     # find stream vals after waste stream 2
-    initial_DO2 = ((DO_15*1000*110000)+(conc_treated2*1000*15000))/(1000*110000+1000*15000)
+    initial_DO2 = ((DO_15*1000*110000)+(C2*1000*15000))/(1000*110000+1000*15000)
     initial_CBOD2 = ((CBOD_15*1000*110000)+(CBOD_treated2*1000*15000))/(1000*110000+1000*15000)
     initial_NBOD2 = ((NBOD_15*1000*110000)+(NBOD_treated2*1000*15000))/(1000*110000+1000*15000)
 
@@ -163,7 +161,7 @@ println(mins[tr])
 ```
 
 The minimum treatment plan that guarantees all DO values are above 4 mg/L is waste stream 2 having a 
-treatment of 14%.
+treatment of 12%.
 
 
 
@@ -180,7 +178,7 @@ mins2 = zeros(101);
 
 # iterate treatments, each stream is treated equally
 for i in 1:101
-  mins2[i] = find_treatment_min(6, 10, 5, 50, 35, 5, 45, 35, .55, .35, .25, treatment_plans[i], treatment_plans[i])
+  mins2[i] = find_treatment_min(6, 10, 7.5, 5, 5, 5, 50, 35, 5, 45, 35, .55, .35, .25, treatment_plans[i], treatment_plans[i])
 end
 
 # minimum %removal that has DO always less that 4 mg/L
@@ -193,7 +191,7 @@ println(mins2[tr2])
 
 ```
 
-If the streams are treated equally, the treatment value that keeps the DO above 4 mg/L is 8% for each stream.
+If the streams are treated equally, the treatment value that keeps the DO above 4 mg/L is 7% for each stream.
 
 
 
@@ -216,40 +214,49 @@ at a rate of 8% as it is more fair, but there are other considerations to take i
 
 using Distributions
 
+# initialize vector to store probabilities
 probs = zeros(100);
 
+# iterate to find probabilities
 for j in 1:100
 
+  # initialize
   global mins3 = zeros(100);
   global fails_regulation = zeros(0);
   global CBODs = zeros(100);
   global NBODs = zeros(100);
 
+  # create vectors for CBOD, NBOD that have uniform dist
   for i in 1:100
     CBODs[i] = rand(Uniform(4, 7));
     NBODs[i] = rand(Uniform(3, 8));
   end
 
+  # find the treatment min for each scenario
   for i in 1:100
     mins3[i] = find_treatment_min(6, 10, 7.5, CBODs[i], NBODs[i], 5, 50, 35, 5, 45, 35, .55, .35, .25, 8, 8);
   end
 
+  # find how many fail the regulation
   for i in 1:100
    if mins3[i] < 4
      append!(fails_regulation, mins3[i]);
    end
   end
 
+  # calc probability
   probs[j] = (length(fails_regulation))/(length(mins3))
 
 end
 
+# take average probability
 avg_prob = (sum(probs))/(length(probs))
+println(avg_prob)
 
 ```
 
 The average probability that the treatment does not meet the requirement of DO above 4 mg/L is 
-around 69%.
+around 65%.
 
 
 
