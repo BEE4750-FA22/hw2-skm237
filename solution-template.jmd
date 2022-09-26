@@ -202,8 +202,11 @@ In order to make a decision about the two treatment plans above, cost should be 
 the plants' willingness to participate in a treatment plan. The first plan, only requiring waste stream 2 
 to be treated, is not fair to the second plant as the first plant does not need to treat their waste. 
 However, treating both waste streams would likely be more expensive,  or it would be tough getting both 
-plants to agree to the treatment plan. I would be more likely to ask both plants to treat their waste 
-at a rate of 8% as it is more fair, but there are other considerations to take into account in the real world.
+plants to agree to the treatment plan. Realistically, it would be best to choose the cheaper option
+despite the unfairness of the situation. In a true setting this choice would not be that simple, and 
+other factors would be necessary to consider. However with the information we are given and my general 
+knowledge of the engineer/client relationship, the cheapest option, where only waste stream 2 is treated, 
+would be my choice.
 
 
 
@@ -234,7 +237,7 @@ for j in 1:100
 
   # find the treatment min for each scenario
   for i in 1:100
-    mins3[i] = find_treatment_min(6, 10, 7.5, CBODs[i], NBODs[i], 5, 50, 35, 5, 45, 35, .55, .35, .25, 8, 8);
+    mins3[i] = find_treatment_min(6, 10, 7.5, CBODs[i], NBODs[i], 5, 50, 35, 5, 45, 35, .55, .35, .25, 0, 12);
   end
 
   # find how many fail the regulation
@@ -256,7 +259,7 @@ println(avg_prob)
 ```
 
 The average probability that the treatment does not meet the requirement of DO above 4 mg/L is 
-around 65%.
+around 70%.
 
 
 
@@ -281,7 +284,70 @@ function sample_correlated_uniform(n, a, b, corr_coef=0.7)
 end
 ```
 
+```julia
+
+# initialize vector to store probabilities
+probs = zeros(100);
+
+# iterate to find probabilities
+for j in 1:100
+
+  # initialize
+  global mins4 = zeros(100);
+  global fails_regulation = zeros(0);
+  global CBODs = zeros(100);
+  global NBODs = zeros(100);
+
+  # create sample vector from function
+  sample_CBOD_NBOD = sample_correlated_uniform(100, [4,7], [3,8]);
+
+  # create vectors for CBOD, NBOD that have uniform dist
+  for i in 1:100
+    CBODs[i] = sample_CBOD_NBOD[i,1];
+    NBODs[i] = sample_CBOD_NBOD[i,2];
+  end
+
+  # find the treatment min for each scenario
+  for i in 1:100
+    mins4[i] = find_treatment_min(6, 10, 7.5, CBODs[i], NBODs[i], 5, 50, 35, 5, 45, 35, .55, .35, .25, 0, 12);
+  end
+
+  # find how many fail the regulation
+  for i in 1:100
+   if mins4[i] < 4
+     append!(fails_regulation, mins4[i]);
+   end
+  end
+
+  # calc probability
+  probs[j] = (length(fails_regulation))/(length(mins3))
+
+end
+
+# take average probability
+avg_prob = (sum(probs))/(length(probs))
+println(avg_prob)
+
+```
+
+The average probability that the treatment does not meet the requirement of DO above 4 mg/L is 
+around 64%.
+
+
+
+
 ## Problem 1.8
+
+The uncertainty here must be taken into account. The uncorrelated values while following the previously 
+discussed treatment plan in 1.5 resulted in an uncertainty of 70%. This was slightly lower at 64% when CBOD and 
+NBOD were related. Both of these values have an unacceptable percent of scenarios that fail to reach the 
+regulation. Cost should be considered as a guide for increasing the treatment efficiencies to a certain, 
+feasible point. Additionally, even if reasonable treatment plan is found that minimizes the probability of 
+failure as well as minimizes cost, other environmental factors could change these predictions and could 
+be added to refine the model.
+
+
+
 
 ```
 
